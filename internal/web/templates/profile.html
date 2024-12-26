@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль пользователя</title>
+</head>
+<body>
+<h1>Профиль пользователя</h1>
+<p><strong>ID пользователя:</strong> {{ .userID }}</p>
+<p><strong>Имя:</strong> {{ .name }}</p>
+<p><strong>Telegram Username:</strong> {{ .username }}</p>
+<p><strong>Рейтинг:</strong> {{ .rating }}</p>
+<br>
+<a href="/logout">Выйти</a>
+</body>
+</html>

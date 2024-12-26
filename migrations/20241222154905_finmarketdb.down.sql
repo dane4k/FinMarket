@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS favorites;
+DROP TABLE IF EXISTS reviews;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS subways;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS login_tokens;
+DROP TABLE IF EXISTS auth_records;
+DROP TABLE IF EXISTS invalid_jwts;
+
+DROP TYPE IF EXISTS condition;

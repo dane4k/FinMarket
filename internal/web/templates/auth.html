@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проверка авторизации</title>
+</head>
+<body>
+<h1>Вы были перенаправлены на ссылку для авторизации. Если этого не произошло, нажмите</h1>
+<h1><a href="{{ .AuthURL }}" target="_blank">АВТОРИЗАЦИЯ ЧЕРЕЗ TELEGRAM</a></h1>
+
+<script>
+    const userAuthToken = "{{ .authToken }}";
+    if (!userAuthToken) {
+        console.error("Ошибка: UUID пустой.");
+        alert("Ошибка: токен не передан или некорректен.");
+    } else {
+        let tokenExpired = false;
+
+        function checkStatus() {
+            if (tokenExpired) return;
+
+            fetch(`/check-status/${userAuthToken}`)
+                .then(response => {
+                    if (response.status === 404) {
+                        console.error("Token not found. Stopping status check.");
+                        tokenExpired = true;
+                        alert("Токен не найден. Пожалуйста, попробуйте заново.");
+                        return;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data) {
+                        console.log('Received data:', data);
+                        if (data.status === "confirmed") {
+                            window.location.href = "/profile";
+                        } else if (data.error === "token expired") {
+                            alert("Токен истёк. Пожалуйста, авторизуйтесь заново.");
+                            window.location.href = "/";
+                        }
+                    }
+                })
+                .catch(err => console.error("Ошибка проверки статуса:", err));
+        }
+
+        setInterval(checkStatus, 5000);
+    }
+
+</script>
+</body>
+</html>
