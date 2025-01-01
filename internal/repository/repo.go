@@ -4,10 +4,14 @@ import (
 	"database/sql"
 	"github.com/dane4k/FinMarket/db"
 	"github.com/dane4k/FinMarket/internal/models"
+	"github.com/dane4k/FinMarket/internal/utils"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/sirupsen/logrus"
+	"os"
 	"time"
 )
+
+var bot *tgbotapi.BotAPI
 
 func SaveAuthRecord(token string) error {
 	authRecord := models.AuthRecord{
@@ -86,16 +90,17 @@ func InvalidateAuthRecord(jti string) error {
 	return db.DB.Create(&invalidJWT).Error
 }
 
-func PutUser(user *tgbotapi.User) error {
+func PutUser(bot *tgbotapi.BotAPI, user *tgbotapi.User) error {
 	var existingUser models.User
 	err := db.DB.Where("tg_id = ?", user.ID).First(&existingUser).Error
 
 	if err != nil {
+		avatarURL := utils.DownloadTGAvatar(bot, user.ID)
 		newUser := models.User{
 			TgID:       int64(user.ID),
 			Name:       user.FirstName + " " + user.LastName,
-			AvatarURL:  "123",
 			TgUsername: user.UserName,
+			AvatarPic:  avatarURL,
 			RegDate:    time.Now(),
 		}
 
@@ -107,7 +112,6 @@ func PutUser(user *tgbotapi.User) error {
 
 	} else {
 		existingUser.Name = user.FirstName + " " + user.LastName
-		existingUser.AvatarURL = "123"
 		existingUser.TgUsername = user.UserName
 
 		if err = db.DB.Save(&existingUser).Error; err != nil {
@@ -116,5 +120,33 @@ func PutUser(user *tgbotapi.User) error {
 		}
 		logrus.Infof("User updated: %s", existingUser.TgUsername)
 	}
+	return nil
+}
+
+func InitTGBot() {
+	botToken := os.Getenv("TG_BOT_TOKEN")
+
+	if botToken == "" {
+		logrus.Fatal("TG_BOT_TOKEN is not set in .env")
+	}
+	bot, _ = tgbotapi.NewBotAPI(botToken)
+}
+
+func UpdateAvatarPic(userID int) error {
+	var existingUser models.User
+	err := db.DB.Where("tg_id = ?", userID).First(&existingUser).Error
+	if err != nil {
+		logrus.WithError(err).Error("Error updating profile pic")
+		return err
+	}
+	avatarURL := utils.DownloadTGAvatar(bot, userID)
+
+	existingUser.AvatarPic = avatarURL
+
+	if err = db.DB.Save(&existingUser).Error; err != nil {
+		logrus.WithError(err).Error("Error updating existing user in the database")
+		return err
+	}
+	logrus.Infof("user pic updated: %v", userID)
 	return nil
 }

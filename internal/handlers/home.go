@@ -1,13 +1,15 @@
 package handlers
 
 import (
-	"github.com/dane4k/FinMarket/db"
 	"github.com/dane4k/FinMarket/internal/auth"
 	"github.com/dane4k/FinMarket/internal/models"
 	"github.com/dane4k/FinMarket/internal/repository"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
+
+const logoutSub = "you are already logged out"
 
 func LoadHome(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.html", gin.H{
@@ -16,21 +18,20 @@ func LoadHome(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
-
 	token, err := c.Cookie("jwtToken")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "you are already logged out"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": logoutSub})
 		return
 	}
 
 	jti, err := auth.ExtractJTI(token)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "you are already logged out"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": logoutSub})
 	}
 
 	err = repository.InvalidateAuthRecord(jti)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "you are already logged out"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": logoutSub})
 	}
 
 	c.SetCookie("jwtToken", "", -1, "/", "", false, true)
@@ -38,35 +39,36 @@ func Logout(c *gin.Context) {
 }
 
 func ShowProfile(c *gin.Context) {
-	token, err := c.Cookie("jwtToken")
-
-	jti, err := auth.ExtractJTI(token)
-	if err != nil {
-		c.Redirect(http.StatusFound, "/auth") // 402
-	}
-
-	if err != nil || !repository.IsTokenValid(jti) {
-		c.Redirect(http.StatusFound, "/auth")
+	user, ok := c.Get("user")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	userID, err := auth.ParseUIDFromJWT(token)
-	if err != nil {
-		c.Redirect(http.StatusFound, "/auth")
-		return
-	}
-
-	var user models.User
-	if err := db.DB.Where("tg_id = ?", userID).First(&user).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"err": "user not found"})
-		return
-	}
+	usr := user.(models.User)
 
 	c.HTML(http.StatusOK, "profile.html", gin.H{
-		"userID":   user.TgID,
-		"username": user.TgUsername,
-		"name":     user.Name,
-		"avatar":   user.AvatarURL,
-		"rating":   user.Rating,
+		"userID":    usr.TgID,
+		"username":  usr.TgUsername,
+		"name":      usr.Name,
+		"rating":    usr.Rating,
+		"avatarPic": usr.AvatarPic,
+		"regDate":   usr.RegDate,
 	})
+}
+
+func UpdateAvatarHandler(c *gin.Context) {
+	userID, err := strconv.Atoi(c.Param("userID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	err = repository.UpdateAvatarPic(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update avatar"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Profile picture updated successfully"})
 }

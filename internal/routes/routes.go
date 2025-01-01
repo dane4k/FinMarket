@@ -2,17 +2,20 @@ package routes
 
 import (
 	"github.com/dane4k/FinMarket/internal/handlers"
+	"github.com/dane4k/FinMarket/internal/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
-func InitializeRoutes(r *gin.Engine) {
-	r.GET("/", handlers.LoadHome)
+func InitializeRoutes(router *gin.Engine) {
+	router.GET("/", handlers.LoadHome)
 
-	r.GET("/auth", handlers.AuthUser)
+	router.GET("/auth", handlers.AuthUser)
 
-	r.GET("/check-status/:token", handlers.CheckStatus)
+	router.GET("/check-status/:token", handlers.CheckStatus)
 
-	r.GET("/profile", handlers.ShowProfile)
+	router.GET("/profile", middlewares.AuthMiddleware(), handlers.ShowProfile)
 
-	r.GET("/logout", handlers.Logout)
+	router.GET("/logout", handlers.Logout)
+
+	router.POST("/api/user/:userID/update-avatar", handlers.UpdateAvatarHandler)
 }

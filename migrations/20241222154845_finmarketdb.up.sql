@@ -2,9 +2,9 @@ CREATE TABLE users
 (
     tg_id       BIGINT PRIMARY KEY,
     name        TEXT NOT NULL,
-    avatar_url  TEXT NOT NULL,
     rating      DOUBLE PRECISION DEFAULT 0.0,
     tg_username TEXT NOT NULL,
+    avatar_pic  TEXT NOT NULL,
     banned      BOOLEAN          DEFAULT FALSE,
     reg_date    DATE             DEFAULT CURRENT_DATE
 );

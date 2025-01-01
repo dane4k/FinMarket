@@ -4,14 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Профиль пользователя</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
 </head>
 <body>
-<h1>Профиль пользователя</h1>
-<p><strong>ID пользователя:</strong> {{ .userID }}</p>
-<p><strong>Имя:</strong> {{ .name }}</p>
-<p><strong>Telegram Username:</strong> {{ .username }}</p>
-<p><strong>Рейтинг:</strong> {{ .rating }}</p>
-<br>
-<a href="/logout">Выйти</a>
+<div class="profile-container">
+    <img src="{{ .avatarPic }}" class="avatar">
+    <h1>{{ .name }}</h1>
+    <div class="profile-item">
+        <strong>ID пользователя:</strong> <span>{{ .userID }}</span>
+    </div>
+    <div class="profile-item">
+        <strong>Имя:</strong> <span>{{ .name }}</span>
+    </div>
+    <div class="profile-item">
+        <strong>Telegram Username:</strong> <a href="https://t.me/{{ .username }}" target="_blank">@{{ .username }}</a>
+    </div>
+    <div class="profile-item">
+        <strong>Рейтинг:</strong> <span>{{ .rating }}</span>
+    </div>
+    <button class="avatar-button" id="updateAvatarBtn">Обновить фото</button>
+</div>
+<a href="/logout" class="logout-button">Выйти</a>
+</div>
+
+<script>
+    document.getElementById("updateAvatarBtn").addEventListener("click", function() {
+        const userID = "{{ .userID }}";
+        fetch(`/api/user/${userID}/update-avatar`, {
+            method: "POST",
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                    window.location.reload();
+                } else {
+                    alert('Ошибка обновления фото');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при обновлении фото');
+            });
+    });
+</script>
+
 </body>
 </html>

@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/dane4k/FinMarket/db"
 	"github.com/dane4k/FinMarket/internal/bot"
+	"github.com/dane4k/FinMarket/internal/repository"
 	"github.com/dane4k/FinMarket/internal/routes"
 	"github.com/gin-gonic/gin"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -30,7 +31,7 @@ func main() {
 	db.InitDB()
 
 	go bot.StartTelegramBot()
-
+	repository.InitTGBot()
 	router := gin.Default()
 	router.Static("/static", "./internal/web/static")
 	router.LoadHTMLGlob("internal/web/templates/*")

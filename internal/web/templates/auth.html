@@ -12,7 +12,7 @@
 <script>
     const userAuthToken = "{{ .authToken }}";
     if (!userAuthToken) {
-        console.error("Ошибка: UUID пустой.");
+        console.error("Ошибка: токен авторизации пустой.");
         alert("Ошибка: токен не передан или некорректен.");
     } else {
         let tokenExpired = false;
@@ -23,7 +23,7 @@
             fetch(`/check-status/${userAuthToken}`)
                 .then(response => {
                     if (response.status === 404) {
-                        console.error("Token not found. Stopping status check.");
+                        console.error("Token not found.");
                         tokenExpired = true;
                         alert("Токен не найден. Пожалуйста, попробуйте заново.");
                         return;

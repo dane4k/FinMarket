@@ -4,7 +4,6 @@ import (
 	"github.com/dane4k/FinMarket/internal/repository"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/sirupsen/logrus"
-	"log"
 	"os"
 	"strings"
 )
@@ -13,14 +12,13 @@ func StartTelegramBot() {
 	botToken := os.Getenv("TG_BOT_TOKEN")
 
 	if botToken == "" {
-		log.Fatal("TG_BOT_TOKEN is not set in .env")
+		logrus.Fatal("TG_BOT_TOKEN is not set in .env")
 	}
 	bot, err := tgbotapi.NewBotAPI(botToken)
 	if err != nil {
 		logrus.WithError(err).Fatal("Error starting Telegram Bot")
 	}
 
-	bot.Debug = true
 	logrus.Infof("Authorized on bot account %s", bot.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)
@@ -54,7 +52,7 @@ func processToken(bot *tgbotapi.BotAPI, chatID int64, token string, user *tgbota
 		return
 	}
 
-	err := repository.PutUser(user)
+	err := repository.PutUser(bot, user)
 	if err != nil {
 		sendMessage(bot, chatID, "Ошибка при сохранении пользователя в базу данных.", false)
 	}
