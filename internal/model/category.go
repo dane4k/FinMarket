@@ -1,6 +1,6 @@
-package models
+package model
 
-type Subway struct {
+type Category struct {
 	ID   int64  `gorm:"primaryKey;column:id"`
 	Name string `gorm:"column:name"`
 }

@@ -1,6 +1,7 @@
-package utils
+package util
 
 import (
+	"github.com/dane4k/FinMarket/internal/default_error"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -18,7 +19,7 @@ func DownloadTGAvatar(bot *tgbotapi.BotAPI, userID int) string {
 		},
 	)
 	if err != nil {
-		logrus.WithError(err).Errorf("failed to get user %v profile pics", userID)
+		logrus.WithError(err).Error(default_error.ErrDownloadingPic)
 		return ""
 	}
 	logrus.Info(len(userPhotos.Photos))
@@ -33,28 +34,33 @@ func DownloadTGAvatar(bot *tgbotapi.BotAPI, userID int) string {
 		FileID: userPhoto.FileID,
 	})
 	if err != nil {
-		logrus.WithError(err).Error("failed to get user profile pic")
+		logrus.WithError(err).Error(default_error.ErrDownloadingPic)
 		return ""
 	}
 
 	resp, err := http.Get(file.Link(bot.Token))
 	if err != nil {
-		logrus.WithError(err).Error("failed to download user profile pic")
+		logrus.WithError(err).Error(default_error.ErrDownloadingPic)
 		return ""
 	}
-	defer resp.Body.Close()
+
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			logrus.WithError(err).Error(default_error.ErrDownloadingPic)
+		}
+	}(resp.Body)
 
 	imageBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logrus.WithError(err).Error("failed to read image bytes")
+		logrus.WithError(err).Error(default_error.ErrInvalidPic)
 		return ""
 	}
 	imgurURL, err := uploadImageToImgur(imageBytes, AccessToken)
 	if err != nil {
-		logrus.WithError(err).Error("failed to upload image to imgur")
 		return ""
 	}
 
-	logrus.Infof("uploaded users avatar to imgur: %s", imgurURL)
+	logrus.Debugf("uploaded users avatar to imgur: %s", imgurURL)
 	return imgurURL
 }

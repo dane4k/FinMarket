@@ -1,4 +1,4 @@
-package models
+package model
 
 type InvalidJWT struct {
 	ID       uint   `gorm:"primaryKey"`

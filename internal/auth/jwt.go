@@ -3,8 +3,8 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"github.com/dane4k/FinMarket/db"
-	"github.com/dane4k/FinMarket/internal/models"
+	"github.com/dane4k/FinMarket/internal/default_error"
+	"github.com/dane4k/FinMarket/internal/repository"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -25,13 +25,11 @@ func GenerateJWT(userId int64, authRecordID uint) (string, error) {
 
 	signedJWT, err := token.SignedString(jwtSecret)
 	if err != nil {
-		logrus.WithError(err).Errorf("Failed to sign JWT for userID:%v", userId)
+		logrus.WithError(err).Errorf("%s for userID: %v", default_error.ErrSigningJWT, userId)
 		return "", err
 	}
 
-	err = db.DB.Model(&models.AuthRecord{}).Where("id = ?", authRecordID).Update("jwt", jti).Error
-	if err != nil {
-		logrus.WithError(err).Errorf("Failed to add jti to auth record: %v", authRecordID)
+	if err := repository.PinJTI(authRecordID, jti); err != nil {
 		return "", err
 	}
 	return signedJWT, nil
@@ -40,14 +38,14 @@ func GenerateJWT(userId int64, authRecordID uint) (string, error) {
 func ParseUIDFromJWT(signedJWT string) (int64, error) {
 	token, err := jwt.Parse(signedJWT, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			logrus.Warnf("Unexpected signing method: %v", token.Header["alg"])
-			return nil, errors.New("unexpected signing method")
+			logrus.Warnf("%s: %v", default_error.ErrSigningMethod, token.Header["alg"])
+			return nil, errors.New(default_error.ErrSigningMethod)
 		}
 		return jwtSecret, nil
 	})
 
 	if err != nil {
-		logrus.WithError(err).Error("Failed to parse JWT")
+		logrus.WithError(err).Error(default_error.ErrParseJWT)
 		return 0, err
 	}
 
@@ -56,28 +54,27 @@ func ParseUIDFromJWT(signedJWT string) (int64, error) {
 			if parsedID, ok := userID.(float64); ok {
 				return int64(parsedID), nil
 			}
-			logrus.Errorf("userID is not of type float64: %v", userID)
-			return 0, fmt.Errorf("userID is not of type float64")
+			logrus.Errorf("%s: %v", default_error.ErrInvalidIDType, userID)
+			return 0, fmt.Errorf(default_error.ErrInvalidIDType)
 		}
-		logrus.Warn("userID not found in token claims")
-		return 0, errors.New("userID not found in token claims")
+		logrus.Errorf(default_error.ErrEmptyClaims)
+		return 0, errors.New(default_error.ErrEmptyClaims)
 	}
 
-	logrus.Warn("Invalid token")
-	return 0, errors.New("invalid token")
+	logrus.Errorf("%s: %s", default_error.ErrorInvalidJWT, signedJWT)
+	return 0, errors.New(default_error.ErrorInvalidJWT)
 }
 
 func ExtractJTI(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			logrus.Warnf("Unexpected signing method: %v", token.Header["alg"])
-			return nil, errors.New("unexpected signing method")
+			logrus.Warnf("%s: %v", default_error.ErrSigningMethod, token.Header["alg"])
+			return nil, errors.New(default_error.ErrSigningMethod)
 		}
 		return jwtSecret, nil
 	})
-
 	if err != nil {
-		logrus.WithError(err).Error("Failed to parse JWT")
+		logrus.WithError(err).Errorf("%s: %s", default_error.ErrParsingJWT, tokenString)
 		return "", err
 	}
 
@@ -85,10 +82,10 @@ func ExtractJTI(tokenString string) (string, error) {
 		if jti, exists := claims["jti"]; exists {
 			return jti.(string), nil
 		}
-		logrus.Warn("JTI not found in token claims")
-		return "", errors.New("JTI not found in token claims")
+		logrus.Errorf("%s: %v", default_error.ErrEmptyClaims, claims)
+		return "", errors.New(default_error.ErrEmptyClaims)
 	}
 
-	logrus.Warn("Invalid token claims")
-	return "", errors.New("invalid token claims")
+	logrus.Warn(default_error.ErrInvalidClaims)
+	return "", errors.New(default_error.ErrInvalidClaims)
 }

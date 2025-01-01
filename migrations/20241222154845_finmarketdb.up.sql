@@ -4,7 +4,7 @@ CREATE TABLE users
     name        TEXT NOT NULL,
     rating      DOUBLE PRECISION DEFAULT 0.0,
     tg_username TEXT NOT NULL,
-    avatar_pic  TEXT NOT NULL,
+    avatar_uri  TEXT NOT NULL,
     banned      BOOLEAN          DEFAULT FALSE,
     reg_date    DATE             DEFAULT CURRENT_DATE
 );

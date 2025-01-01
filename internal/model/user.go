@@ -1,4 +1,4 @@
-package models
+package model
 
 import (
 	"time"
@@ -9,7 +9,7 @@ type User struct {
 	Name       string    `gorm:"column:name"`
 	Rating     float64   `gorm:"column:rating"`
 	TgUsername string    `gorm:"column:tg_username"`
-	AvatarPic  string    `gorm:"column:avatar_pic"`
+	AvatarURI  string    `gorm:"column:avatar_uri"`
 	Banned     bool      `gorm:"column:banned"`
 	RegDate    time.Time `gorm:"column:reg_date"`
 }

@@ -1,8 +1,8 @@
-package handlers
+package handler
 
 import (
 	"github.com/dane4k/FinMarket/internal/auth"
-	"github.com/dane4k/FinMarket/internal/models"
+	"github.com/dane4k/FinMarket/internal/model"
 	"github.com/dane4k/FinMarket/internal/repository"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -11,13 +11,13 @@ import (
 
 const logoutSub = "you are already logged out"
 
-func LoadHome(c *gin.Context) {
+func LoadHomeHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"title": "home page",
 	})
 }
 
-func Logout(c *gin.Context) {
+func LogoutHandler(c *gin.Context) {
 	token, err := c.Cookie("jwtToken")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": logoutSub})
@@ -38,21 +38,21 @@ func Logout(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/")
 }
 
-func ShowProfile(c *gin.Context) {
+func ShowProfileHandler(c *gin.Context) {
 	user, ok := c.Get("user")
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	usr := user.(models.User)
+	usr := user.(model.User)
 
 	c.HTML(http.StatusOK, "profile.html", gin.H{
 		"userID":    usr.TgID,
 		"username":  usr.TgUsername,
 		"name":      usr.Name,
 		"rating":    usr.Rating,
-		"avatarPic": usr.AvatarPic,
+		"avatarPic": usr.AvatarURI,
 		"regDate":   usr.RegDate,
 	})
 }
@@ -70,5 +70,5 @@ func UpdateAvatarHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Profile picture updated successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Аватарка обновлена"})
 }

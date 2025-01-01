@@ -1,0 +1,35 @@
+package default_error
+
+const (
+	ErrInvalidEnv     = "is not set in .env"
+	ErrTokenNotFound  = "auth token record not found"
+	ErrDatabaseError  = "database error"
+	ErrSigningJWT     = "failed to sign jwt"
+	ErrAddJTI         = "failed to add jti to auth record"
+	ErrSigningMethod  = "unexpected signing method"
+	ErrParseJWT       = "failed  to parse jwt"
+	ErrInvalidIDType  = "userID is not of type float64"
+	ErrEmptyClaims    = "token claims doesnt contain required fields"
+	ErrorInvalidJWT   = "invalid jwt"
+	ErrParsingJWT     = "failed to parse jwt"
+	ErrInvalidClaims  = "invalid token claims"
+	ErrStartingBot    = "Error starting Telegram bot"
+	ErrSendingMsg     = "Error sending message"
+	ErrGeneratingLink = "Error generating auth link"
+	ErrDownloadingPic = "Error downloading picture"
+	ErrUploadingPic   = "error uploading picture to imgur"
+	ErrInvalidPic     = "Invalid picture"
+
+	WarnInvalidLink = "is trying to use invalid link"
+	InfoInvalidLink = "Ссылка недействительна или уже использована"
+
+	GetTokenContext          = "Getting token"
+	SaveTokenContext         = "Saving token"
+	GetJTIContext            = "Getting JTI"
+	InvalidateTokensContext  = "Invalidating tokens"
+	InvalidateSessionContext = "Invalidating session"
+	GetUserContext           = "Getting user"
+	SaveUserContext          = "Saving user"
+	UpdateUserContext        = "Updating user"
+	UpdateJTIContext         = "Updating jti"
+)

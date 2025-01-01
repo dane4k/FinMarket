@@ -1,30 +1,27 @@
-package handlers
+package handler
 
 import (
 	"github.com/dane4k/FinMarket/internal/auth"
 	"github.com/dane4k/FinMarket/internal/repository"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"time"
 )
 
-func CheckStatus(c *gin.Context) {
+func CheckStatusHandler(c *gin.Context) {
 	token := c.Param("token")
 	record, err := repository.GetAuthRecord(token)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"err": "not found"})
+		c.JSON(http.StatusNotFound, gin.H{"err": "auth token not found"})
 		return
 	}
 
 	now := time.Now().UTC().Add(3 * time.Hour)
 	expires := record.ExpiresAt.Truncate(time.Second)
 	if now.After(expires) {
-		c.JSON(http.StatusGone, gin.H{"error": "token expired"})
+		c.JSON(http.StatusGone, gin.H{"error": "auth token expired"})
 		return
 	}
-
-	logrus.Debug("Record Status:", record.Status)
 
 	if record.Status == "confirmed" {
 		jwtToken, err := auth.GenerateJWT(record.TgID, record.ID)

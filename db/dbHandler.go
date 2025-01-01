@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"log"
 	"os"
 )
@@ -25,9 +26,13 @@ func InitDB() {
 	connectionStr := fmt.Sprintf("host=%s dbname=%s port=%s user=%s password=%s sslmode=disable",
 		dbServer, dbName, dbPort, dbUsername, dbUserPassword)
 
-	db, err := gorm.Open(postgres.Open(connectionStr), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(connectionStr), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
+
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	DB = db
 }

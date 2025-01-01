@@ -1,16 +1,14 @@
-package handlers
+package handler
 
 import (
-	"github.com/dane4k/FinMarket/internal/services"
+	"github.com/dane4k/FinMarket/internal/service"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
-func AuthUser(c *gin.Context) {
-	authToken, authLink, err := services.GenerateAuthLink()
+func AuthHandler(c *gin.Context) {
+	authToken, authLink, err := service.GenerateAuthLink()
 	if err != nil {
-		logrus.WithError(err).Error("Error generating auth link")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate auth link"})
 		return
 	}

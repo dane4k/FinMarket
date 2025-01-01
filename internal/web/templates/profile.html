@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Профиль пользователя</title>
     <link rel="stylesheet" href="../static/css/styles.css">
+    <script src="../static/js/profile.js" defer></script>
 </head>
 <body>
 <div class="profile-container">
@@ -26,28 +27,6 @@
 </div>
 <a href="/logout" class="logout-button">Выйти</a>
 </div>
-
-<script>
-    document.getElementById("updateAvatarBtn").addEventListener("click", function() {
-        const userID = "{{ .userID }}";
-        fetch(`/api/user/${userID}/update-avatar`, {
-            method: "POST",
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    alert(data.message);
-                    window.location.reload();
-                } else {
-                    alert('Ошибка обновления фото');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Произошла ошибка при обновлении фото');
-            });
-    });
-</script>
 
 </body>
 </html>
