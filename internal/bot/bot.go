@@ -47,7 +47,7 @@ func processToken(bot *tgbotapi.BotAPI, chatID int64, token string, user *tgbota
 	record, err := repository.GetAuthRecord(token)
 	if err != nil || record.Status != "pending" {
 		logrus.Warnf("%v %s", userID, default_error.WarnInvalidLink)
-		sendMessage(bot, chatID, default_error.InfoInvalidLink, false)
+		sendMessage(bot, chatID, "Ссылка недействительна или уже использована", false)
 		return
 	}
 

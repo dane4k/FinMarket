@@ -22,9 +22,7 @@ func DownloadTGAvatar(bot *tgbotapi.BotAPI, userID int) string {
 		logrus.WithError(err).Error(default_error.ErrDownloadingPic)
 		return ""
 	}
-	logrus.Info(len(userPhotos.Photos))
 	if len(userPhotos.Photos) == 0 {
-		logrus.Info(0)
 		return defaultAvatar
 	}
 
@@ -61,6 +59,5 @@ func DownloadTGAvatar(bot *tgbotapi.BotAPI, userID int) string {
 		return ""
 	}
 
-	logrus.Debugf("uploaded users avatar to imgur: %s", imgurURL)
 	return imgurURL
 }

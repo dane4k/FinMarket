@@ -1,4 +1,4 @@
-package auth
+package service
 
 import (
 	"errors"
@@ -14,7 +14,7 @@ import (
 
 var jwtSecret = []byte(os.Getenv("JWT_SECRET_KEY"))
 
-func GenerateJWT(userId int64, authRecordID uint) (string, error) {
+func generateJWT(userId int64, authRecordID uint) (string, error) {
 	jti := uuid.New().String()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"jti":    jti,

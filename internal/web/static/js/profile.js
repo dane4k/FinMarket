@@ -1,6 +1,7 @@
+const usrID = userID;
+console.log(usrID)
 document.getElementById("updateAvatarBtn").addEventListener("click", function () {
-    const userID = "{{ .userID }}";
-    fetch(`/api/user/${userID}/update-avatar`, {
+    fetch(`/api/user/${usrID}/update-avatar`, {
         method: "POST",
     })
         .then(response => response.json())

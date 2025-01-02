@@ -16,7 +16,7 @@ func GetAuthRecord(authToken string) (*model.AuthRecord, error) {
 
 	if err := db.DB.Where("token = ?", authToken).First(&record).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logrus.Errorf("%s: %s for token %s", default_error.GetTokenContext, default_error.ErrTokenNotFound, authToken)
+			logrus.Errorf("%s: %s for token %s", default_error.GetTokenContext, default_error.ExErrTokenNotFound, authToken)
 			return nil, err
 		}
 		logrus.WithError(err).Errorf("%s: %s", default_error.GetTokenContext, default_error.ErrDatabaseError)
@@ -47,7 +47,7 @@ func InvalidateAllTokens(userId int64) error {
 	var tokens []sql.NullString
 	if err := db.DB.Model(&model.AuthRecord{}).Where("tg_id = ?", userId).Pluck("jwt", &tokens).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logrus.Errorf("%ss: %s for user id %v", default_error.GetTokenContext, default_error.ErrTokenNotFound, userId)
+			logrus.Errorf("%ss: %s for user id %v", default_error.GetTokenContext, default_error.ExErrTokenNotFound, userId)
 			return err
 		}
 		logrus.WithError(err).Errorf("%ss: %s", default_error.GetTokenContext, default_error.ErrDatabaseError)
@@ -79,7 +79,7 @@ func InvalidateAllTokens(userId int64) error {
 func PinJTI(authRecordID uint, jti string) error {
 	if err := db.DB.Model(&model.AuthRecord{}).Where("id = ?", authRecordID).Update("jwt", jti).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logrus.WithError(err).Errorf("%ss: %s", default_error.UpdateJTIContext, default_error.ErrTokenNotFound)
+			logrus.WithError(err).Errorf("%ss: %s", default_error.UpdateJTIContext, default_error.ExErrTokenNotFound)
 			return err
 		}
 		logrus.WithError(err).Errorf("%s: %v", default_error.ErrAddJTI, authRecordID)

@@ -22,7 +22,9 @@ if (!userAuthToken) {
                 if (data) {
                     console.log('Received data:', data);
                     if (data.status === "confirmed") {
-                        window.location.href = "/profile";
+                        setTimeout(() => {
+                            window.location.href = "/profile";
+                        }, 1000);
                     } else if (data.error === "token expired") {
                         alert("Токен истёк. Пожалуйста, авторизуйтесь заново.");
                         window.location.href = "/";
