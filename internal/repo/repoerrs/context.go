@@ -1,13 +1,14 @@
-package default_error
+package repoerrs
 
 const (
 	GetTokenContext          = "Getting token"
+	TokenNotFoundContext     = "auth token record not found"
 	SaveTokenContext         = "Saving token"
-	GetJTIContext            = "Getting JTI"
 	InvalidateTokensContext  = "Invalidating tokens"
-	InvalidateSessionContext = "Invalidating session"
-	GetUserContext           = "Getting user"
-	SaveUserContext          = "Saving user"
-	UpdateUserContext        = "Updating user"
 	UpdateJTIContext         = "Updating jti"
+	GetJTIContext            = "Getting JTI"
+	InvalidateSessionContext = "Invalidating session"
+	SaveUserContext          = "Saving user"
+	GetUserContext           = "Getting user"
+	UpdateUserContext        = "Updating user"
 )

@@ -1,9 +1,8 @@
-package bot
+package tg_bot
 
 import (
-	"github.com/dane4k/FinMarket/internal/default_error"
-	"github.com/dane4k/FinMarket/internal/repository"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/dane4k/FinMarket/internal/repo/pgdb"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
 	"os"
 	"strings"
@@ -12,18 +11,18 @@ import (
 func StartTelegramBot() {
 	botToken := os.Getenv("TG_BOT_TOKEN")
 	if botToken == "" {
-		logrus.Fatalf("TG_BOT_TOKEN %s", default_error.ErrInvalidEnv)
+		logrus.Fatalf("TG_BOT_TOKEN %s", "is not set in .env")
 	}
 
 	bot, err := tgbotapi.NewBotAPI(botToken)
 	if err != nil {
-		logrus.WithError(err).Fatal(default_error.ErrStartingBot)
+		logrus.WithError(err).Fatal("Error starting telegram bot")
 	}
-	logrus.Infof("Authorized bot on @%s", bot.Self.UserName)
+	logrus.Infof("Authorized tg_bot on @%s", bot.Self.UserName)
 
 	upd := tgbotapi.NewUpdate(0)
 	upd.Timeout = 60
-	updates, err := bot.GetUpdatesChan(upd)
+	updates := bot.GetUpdatesChan(upd)
 
 	for update := range updates {
 		if update.Message != nil {
@@ -44,19 +43,18 @@ func handleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 
 func processToken(bot *tgbotapi.BotAPI, chatID int64, token string, user *tgbotapi.User) {
 	userID := user.ID
-	record, err := repository.GetAuthRecord(token)
+	record, err := pgdb.GetAuthRecord(token)
 	if err != nil || record.Status != "pending" {
-		logrus.Warnf("%v %s", userID, default_error.WarnInvalidLink)
 		sendMessage(bot, chatID, "Ссылка недействительна или уже использована", false)
 		return
 	}
 
-	if err = repository.ConfirmToken(token, userID); err != nil {
+	if err = pgdb.ConfirmToken(token, userID); err != nil {
 		sendMessage(bot, chatID, "Ошибка при подтверждении токена.", false)
 		return
 	}
 
-	err = repository.PutUser(bot, user)
+	err = pgdb.PutUser(bot, user)
 	if err != nil {
 		sendMessage(bot, chatID, "Ошибка при сохранении пользователя в базу данных.", false)
 	}
@@ -65,8 +63,8 @@ func processToken(bot *tgbotapi.BotAPI, chatID int64, token string, user *tgbota
 	return
 }
 
-func handleExit(bot *tgbotapi.BotAPI, chatID int64, userID int) {
-	if err := repository.InvalidateAllTokens(int64(userID)); err != nil {
+func handleExit(bot *tgbotapi.BotAPI, chatID int64, userID int64) {
+	if err := pgdb.InvalidateAllTokens(userID); err != nil {
 		sendMessage(bot, chatID, "У вас нет активных сессий", false)
 	}
 	sendMessage(bot, chatID, "Вы вышли из системы на всех устройствах", false)
@@ -90,7 +88,7 @@ func sendMessage(bot *tgbotapi.BotAPI, chatID int64, msg string, addKeyboard boo
 		message.ReplyMarkup = keyboard
 	}
 	if _, err := bot.Send(message); err != nil {
-		logrus.WithError(err).Error(default_error.ErrSendingMsg)
+		logrus.WithError(err).Error("Error sending message")
 		return
 	}
 }

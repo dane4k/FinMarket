@@ -2,8 +2,8 @@ package handler
 
 import (
 	"errors"
-	"github.com/dane4k/FinMarket/internal/default_error"
 	"github.com/dane4k/FinMarket/internal/service"
+	"github.com/dane4k/FinMarket/internal/service/service_errs"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -19,7 +19,7 @@ func LogoutHandler(c *gin.Context) {
 
 	err = service.LogoutUser(token)
 	if err != nil {
-		if errors.Is(err, default_error.ErrInvalidToken) {
+		if errors.Is(err, service_errs.ErrInvalidToken) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{"error": logoutSub})
@@ -42,7 +42,7 @@ func ShowProfileHandler(c *gin.Context) {
 func UpdateAvatarHandler(c *gin.Context) {
 	err := service.UpdateUserAvatar(c)
 	if err != nil {
-		if errors.Is(err, default_error.ErrInvalidUserData) {
+		if errors.Is(err, service_errs.ErrInvalidUserData) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

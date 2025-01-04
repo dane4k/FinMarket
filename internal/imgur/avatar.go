@@ -1,15 +1,14 @@
-package util
+package imgur
 
 import (
-	"github.com/dane4k/FinMarket/internal/default_error"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"os"
 )
 
-func DownloadTGAvatar(bot *tgbotapi.BotAPI, userID int) string {
+func DownloadTGAvatar(bot *tgbotapi.BotAPI, userID int64) string {
 	var AccessToken = os.Getenv("IMGUR_ACCESS_TOKEN")
 	var defaultAvatar = os.Getenv("DEFAULT_AVATAR")
 
@@ -19,7 +18,7 @@ func DownloadTGAvatar(bot *tgbotapi.BotAPI, userID int) string {
 		},
 	)
 	if err != nil {
-		logrus.WithError(err).Error(default_error.ErrDownloadingPic)
+		logrus.WithError(err).Error(ErrDownloadingPic)
 		return ""
 	}
 	if len(userPhotos.Photos) == 0 {
@@ -32,26 +31,26 @@ func DownloadTGAvatar(bot *tgbotapi.BotAPI, userID int) string {
 		FileID: userPhoto.FileID,
 	})
 	if err != nil {
-		logrus.WithError(err).Error(default_error.ErrDownloadingPic)
+		logrus.WithError(err).Error(ErrDownloadingPic)
 		return ""
 	}
 
 	resp, err := http.Get(file.Link(bot.Token))
 	if err != nil {
-		logrus.WithError(err).Error(default_error.ErrDownloadingPic)
+		logrus.WithError(err).Error(ErrDownloadingPic)
 		return ""
 	}
 
 	defer func(Body io.ReadCloser) {
 		err = Body.Close()
 		if err != nil {
-			logrus.WithError(err).Error(default_error.ErrDownloadingPic)
+			logrus.WithError(err).Error(ErrDownloadingPic)
 		}
 	}(resp.Body)
 
 	imageBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logrus.WithError(err).Error(default_error.ErrInvalidPic)
+		logrus.WithError(err).Error(ErrDownloadingPic)
 		return ""
 	}
 	imgurURL, err := uploadImageToImgur(imageBytes, AccessToken)

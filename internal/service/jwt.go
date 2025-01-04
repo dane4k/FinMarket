@@ -1,10 +1,9 @@
 package service
 
 import (
-	"errors"
 	"fmt"
-	"github.com/dane4k/FinMarket/internal/default_error"
-	"github.com/dane4k/FinMarket/internal/repository"
+	"github.com/dane4k/FinMarket/internal/repo/pgdb"
+	"github.com/dane4k/FinMarket/internal/service/service_errs"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -25,11 +24,11 @@ func generateJWT(userId int64, authRecordID uint) (string, error) {
 
 	signedJWT, err := token.SignedString(jwtSecret)
 	if err != nil {
-		logrus.WithError(err).Errorf("%s for userID: %v", default_error.ErrSigningJWT, userId)
+		logrus.WithError(err).Errorf("%s for userID: %v", service_errs.ErrSigningJWT, userId)
 		return "", err
 	}
 
-	if err := repository.PinJTI(authRecordID, jti); err != nil {
+	if err := pgdb.PinJTI(authRecordID, jti); err != nil {
 		return "", err
 	}
 	return signedJWT, nil
@@ -38,14 +37,14 @@ func generateJWT(userId int64, authRecordID uint) (string, error) {
 func ParseUIDFromJWT(signedJWT string) (int64, error) {
 	token, err := jwt.Parse(signedJWT, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			logrus.Warnf("%s: %v", default_error.ErrSigningMethod, token.Header["alg"])
-			return nil, errors.New(default_error.ErrSigningMethod)
+			logrus.Warnf("%s: %v", service_errs.ErrSigningMethod.Error(), token.Header["alg"])
+			return nil, service_errs.ErrSigningMethod
 		}
 		return jwtSecret, nil
 	})
 
 	if err != nil {
-		logrus.WithError(err).Error(default_error.ErrParseJWT)
+		logrus.WithError(err).Error(service_errs.ErrParseJWT)
 		return 0, err
 	}
 
@@ -54,27 +53,27 @@ func ParseUIDFromJWT(signedJWT string) (int64, error) {
 			if parsedID, ok := userID.(float64); ok {
 				return int64(parsedID), nil
 			}
-			logrus.Errorf("%s: %v", default_error.ErrInvalidIDType, userID)
-			return 0, fmt.Errorf(default_error.ErrInvalidIDType)
+			logrus.Errorf("%s: %v", service_errs.ErrInvalidIDType, userID)
+			return 0, fmt.Errorf(service_errs.ErrInvalidIDType)
 		}
-		logrus.Errorf(default_error.ErrEmptyClaims)
-		return 0, errors.New(default_error.ErrEmptyClaims)
+		logrus.Error(service_errs.ErrEmptyClaims.Error())
+		return 0, service_errs.ErrEmptyClaims
 	}
 
-	logrus.Errorf("%s: %s", default_error.ErrorInvalidJWT, signedJWT)
-	return 0, errors.New(default_error.ErrorInvalidJWT)
+	logrus.Errorf("%s: %s", service_errs.ErrorInvalidJWT.Error(), signedJWT)
+	return 0, service_errs.ErrorInvalidJWT
 }
 
 func ExtractJTI(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			logrus.Warnf("%s: %v", default_error.ErrSigningMethod, token.Header["alg"])
-			return nil, errors.New(default_error.ErrSigningMethod)
+			logrus.Warnf("%s: %v", service_errs.ErrSigningMethod.Error(), token.Header["alg"])
+			return nil, service_errs.ErrSigningMethod
 		}
 		return jwtSecret, nil
 	})
 	if err != nil {
-		logrus.WithError(err).Errorf("%s: %s", default_error.ErrParsingJWT, tokenString)
+		logrus.WithError(err).Errorf("%s: %s", service_errs.ErrParsingJWT, tokenString)
 		return "", err
 	}
 
@@ -82,10 +81,10 @@ func ExtractJTI(tokenString string) (string, error) {
 		if jti, exists := claims["jti"]; exists {
 			return jti.(string), nil
 		}
-		logrus.Errorf("%s: %v", default_error.ErrEmptyClaims, claims)
-		return "", errors.New(default_error.ErrEmptyClaims)
+		logrus.Errorf("%s: %v", service_errs.ErrEmptyClaims.Error(), claims)
+		return "", service_errs.ErrEmptyClaims
 	}
 
-	logrus.Warn(default_error.ErrInvalidClaims)
-	return "", errors.New(default_error.ErrInvalidClaims)
+	logrus.Warn(service_errs.ErrInvalidClaims.Error())
+	return "", service_errs.ErrInvalidClaims
 }

@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func InitLogrus() {
+func InitLogger() {
 	logFile, err := os.OpenFile("./FinMarket.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to create or open log file")

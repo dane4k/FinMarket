@@ -2,10 +2,10 @@ package main
 
 import (
 	"github.com/dane4k/FinMarket/db"
-	"github.com/dane4k/FinMarket/internal/bot"
 	"github.com/dane4k/FinMarket/internal/logrs"
-	"github.com/dane4k/FinMarket/internal/repository"
+	"github.com/dane4k/FinMarket/internal/repo/pgdb"
 	"github.com/dane4k/FinMarket/internal/route"
+	"github.com/dane4k/FinMarket/internal/tg_bot"
 	"github.com/gin-gonic/gin"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/joho/godotenv"
@@ -17,12 +17,12 @@ func main() {
 		logrus.Fatal("Error loading .env file")
 	}
 
-	logrs.InitLogrus()
+	logrs.InitLogger()
 
 	db.InitDB()
 
-	go bot.StartTelegramBot()
-	repository.InitTGBot()
+	go tg_bot.StartTelegramBot()
+	pgdb.InitTGBot()
 
 	router := gin.Default()
 	router.Static("/static", "./internal/web/static")

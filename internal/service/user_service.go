@@ -1,9 +1,9 @@
 package service
 
 import (
-	"github.com/dane4k/FinMarket/internal/default_error"
-	"github.com/dane4k/FinMarket/internal/model"
-	"github.com/dane4k/FinMarket/internal/repository"
+	"github.com/dane4k/FinMarket/internal/entity"
+	"github.com/dane4k/FinMarket/internal/repo/pgdb"
+	"github.com/dane4k/FinMarket/internal/service/service_errs"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"strconv"
@@ -12,11 +12,11 @@ import (
 func LogoutUser(token string) error {
 	jti, err := ExtractJTI(token)
 	if err != nil {
-		return default_error.ErrInvalidToken
+		return service_errs.ErrInvalidToken
 	}
 
-	if err = repository.InvalidateAuthRecord(jti); err != nil {
-		return default_error.ErrLogoutFault
+	if err = pgdb.InvalidateAuthRecord(jti); err != nil {
+		return service_errs.ErrLogoutFault
 	}
 
 	return nil
@@ -25,12 +25,12 @@ func LogoutUser(token string) error {
 func GetUserProfile(c *gin.Context) (map[string]interface{}, error) {
 	user, ok := c.Get("user")
 	if !ok {
-		return nil, default_error.ErrUnauthorized
+		return nil, service_errs.ErrUnauthorized
 	}
 
-	usr, ok := user.(model.User)
+	usr, ok := user.(*entity.User)
 	if !ok {
-		return nil, default_error.ErrInvalidUserData
+		return nil, service_errs.ErrInvalidUserData
 	}
 
 	return map[string]interface{}{
@@ -47,11 +47,11 @@ func UpdateUserAvatar(c *gin.Context) error {
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {
 		logrus.Info(err)
-		return default_error.ErrInvalidUserData
+		return service_errs.ErrInvalidUserData
 	}
 
-	if repository.UpdateAvatarPic(userID) != nil {
-		return default_error.ErrUpdatingAvatar
+	if pgdb.UpdateAvatarPic(int64(userID)) != nil {
+		return service_errs.ErrUpdatingAvatar
 	}
 
 	return nil

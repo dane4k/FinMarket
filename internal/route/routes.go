@@ -17,5 +17,7 @@ func InitializeRoutes(router *gin.Engine) {
 
 	router.GET("/logout", handler.LogoutHandler)
 
-	router.POST("/api/user/:userID/update-avatar", handler.UpdateAvatarHandler)
+	router.POST("/api/user/:userID/update-avatar", middleware.AuthMiddleware(), handler.UpdateAvatarHandler)
+
+	router.POST("/add/product", handler.CreateProductHandler)
 }

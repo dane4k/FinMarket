@@ -1,9 +1,9 @@
 package service
 
 import (
-	"github.com/dane4k/FinMarket/internal/default_error"
-	"github.com/dane4k/FinMarket/internal/model"
-	"github.com/dane4k/FinMarket/internal/repository"
+	"github.com/dane4k/FinMarket/internal/entity"
+	"github.com/dane4k/FinMarket/internal/repo/pgdb"
+	"github.com/dane4k/FinMarket/internal/service/service_errs"
 	"github.com/gin-gonic/gin"
 	"time"
 )
@@ -19,14 +19,14 @@ type Cookie struct {
 }
 
 func CheckAuthStatus(token string) (string, *Cookie, error) {
-	record, err := repository.GetAuthRecord(token)
+	record, err := pgdb.GetAuthRecord(token)
 	if err != nil {
-		return "", nil, default_error.ErrTokenNotFound
+		return "", nil, service_errs.ErrTokenNotFound
 	}
 
 	now := time.Now().UTC().Add(3 * time.Hour)
 	if now.After(record.ExpiresAt) {
-		return "", nil, default_error.ErrTokenExpired
+		return "", nil, service_errs.ErrTokenExpired
 	}
 
 	if record.Status == "confirmed" {
@@ -49,15 +49,15 @@ func CheckAuthStatus(token string) (string, *Cookie, error) {
 	}
 }
 
-func AuthorizeUser(c *gin.Context) (model.User, error) {
+func AuthorizeUser(c *gin.Context) (*entity.User, error) {
 	userID, valid := IsAuthed(c)
 	if !valid {
-		return model.User{}, default_error.ErrUnauthorized
+		return nil, service_errs.ErrUnauthorized
 	}
 
-	user, err := repository.GetUser(int(userID))
-	if err != nil || user.TgID == 0 {
-		return model.User{}, default_error.ErrUserNotFound
+	user, err := pgdb.GetUser(userID)
+	if err != nil || user == nil {
+		return nil, service_errs.ErrUserNotFound
 	}
 	return user, nil
 }
@@ -73,7 +73,7 @@ func IsAuthed(c *gin.Context) (int64, bool) {
 		return 0, false
 	}
 
-	isValid, err := repository.IsJTIValid(jti)
+	isValid, err := pgdb.IsJTIValid(jti)
 	if err != nil || !isValid {
 		return 0, false
 	}
