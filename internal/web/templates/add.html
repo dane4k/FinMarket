@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <script>
+        async function submitForm() {
+            const userId = parseInt(document.getElementById('user_id').value, 10);
+
+            const form = document.getElementById('addProductForm');
+
+            const name = document.querySelector('input[name="name"]').value;
+            const description = document.querySelector('textarea[name="description"]').value || "";
+            const categoryId = document.querySelector('select[name="category_id"]').value;
+            const subwayId = document.querySelector('select[name="subway_id"]').value;
+            const productCondition = document.querySelector('select[name="product_condition"]').value;
+            const price = parseInt(document.querySelector('input[name="price"]').value, 10);
+
+            const photosInput = document.querySelector('input[name="photos_urls"]');
+            const photosBytes = [];
+
+            if (photosInput.files.length < 1 || photosInput.files.length > 3) {
+                alert("Выберите от 1 до 3 фотографий");
+                return;
+            }
+            for (let i = 0; i < photosInput.files.length; i++) {
+                const file = photosInput.files[i];
+                const arrayBuffer = await file.arrayBuffer();
+                photosBytes.push(Array.from(new Uint8Array(arrayBuffer)));
+            }
+
+            const productData = {
+                user_id: userId,
+                category_id: parseInt(categoryId, 10),
+                subway_id: parseInt(subwayId, 10),
+                photos_bytes: photosBytes,
+                name,
+                description,
+                product_condition: productCondition,
+                price
+            };
+
+            try {
+                const response = await fetch('/add/product', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(productData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Товар добавлен! ID: ${result.data}`);
+                } else {
+                    const error = await response.json();
+                    alert(`Ошибка: ${error.error}`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Произошла ошибка при отправке данных.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('addProductForm');
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                submitForm();
+            });
+        });
+
+        function updateFileCount() {
+            const input = document.getElementById('photos_urls');
+            const fileCount = document.getElementById('file-count');
+
+            if (input.files.length > 0) {
+                fileCount.textContent = `${input.files.length} файл(ов) выбрано`;
+            } else {
+                fileCount.textContent = '';
+            }
+        }
+    </script>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-left">
+        <a href="/" class="logo">
+            <img src="../static/images/logo.png"/>
+            <span class="title-text">FinMarket</span>
+        </a>
+    </div>
+
+    <div class="navbar-right">
+        <a href="/favorite" class="heart">
+            <img src="../static/images/favorite.png">
+        </a>
+        <a href="/add/product" class="add-product">
+            <img src="../static/images/add.png">
+        </a>
+        <a href="/profile" class="user-pic">
+            <img src="../static/images/user.png"/>
+        </a>
+    </div>
+</nav>
+
+<div class="category-container">
+    {{ range .Categories }}
+    <div class="category-item">
+        <a href="/products/{{ .ID }}">
+            <img class="category-img" src="{{ .URI }}" alt="category logo">
+            <span class="category-text">{{ .Name }}</span>
+        </a>
+    </div>
+    {{ end }}
+</div>
+
+<div class="add-product-fields">
+    <h1>Выложить объявление</h1>
+
+    <form id="addProductForm">
+        <input type="hidden" id="user_id" value="{{ .UserID }}">
+
+        <div class="form-text">
+            <strong>Название товара:</strong>
+            <input type="text" name="name" placeholder="Введите название" required minlength="4" maxlength="90">
+        </div>
+
+        <div class="form-text">
+            <strong>Описание:</strong>
+            <textarea name="description" placeholder="Введите описание" rows="4" maxlength="1000"></textarea>
+        </div>
+
+        <div class="form-choose">
+            <strong>Категория:</strong>
+            <select name="category_id" required>
+                {{ range .Categories }}
+                <option value="{{ .ID }}">{{ .Name }}</option>
+                {{ end }}
+            </select>
+        </div>
+
+
+        <div class="form-choose">
+            <strong>Станция метро:</strong>
+            <select name="subway_id" required>
+                <option value="1">Белорусская</option>
+                <option value="2">Красные ворота</option>
+                <option value="3">Третьяковская</option>
+                <option value="4">Киевская</option>
+                <option value="5">Пушкинская</option>
+            </select>
+        </div>
+
+        <div class="form-choose">
+            <strong>Состояние:</strong>
+            <select name="product_condition" required>
+                <option value="Новый">Новый</option>
+                <option value="Б/У">Б/У</option>
+            </select>
+        </div>
+
+        <div class="form-int">
+            <strong>Цена (₽):</strong>
+            <input type="number" name="price" placeholder="Введите цену" min="1" max="999999" required>
+        </div>
+
+        <div class="form-files">
+            <strong>Фотографии:</strong>
+            <div class="file-upload">
+                <input type="file" id="photos_urls" name="photos_urls" accept="image/*" multiple required
+                       class="file-input" onchange="updateFileCount()">
+                <label for="photos_urls" class="file-label">Выберите фотографии</label>
+                <span id="file-count" class="file-count"></span> <!-- Элемент для отображения количества файлов -->
+            </div>
+        </div>
+        <button type="button" onclick="submitForm()">Добавить</button>
+    </form>
+</div>
+</body>
+</html>

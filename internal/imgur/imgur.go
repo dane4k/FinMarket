@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"io"
+	"log"
 	"net/http"
 )
 
-func uploadImageToImgur(imageBytes []byte, accessToken string) (string, error) {
+func UploadImageToImgur(imageBytes []byte, accessToken string) (string, error) {
 	imageBase64 := base64.StdEncoding.EncodeToString(imageBytes)
 
 	payload := map[string]string{"image": imageBase64}
@@ -34,6 +35,8 @@ func uploadImageToImgur(imageBytes []byte, accessToken string) (string, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
+		log.Println("111")
+
 		logrus.WithError(err).Error(ErrUploadingPic)
 		return "", err
 	}

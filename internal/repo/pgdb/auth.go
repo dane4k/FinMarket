@@ -3,54 +3,67 @@ package pgdb
 import (
 	"database/sql"
 	"errors"
-	"github.com/dane4k/FinMarket/db"
+	"github.com/dane4k/FinMarket/internal/config"
 	"github.com/dane4k/FinMarket/internal/entity"
-	"github.com/dane4k/FinMarket/internal/repo/repoerrs"
+	"github.com/dane4k/FinMarket/internal/repo"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"time"
 )
 
-func GetAuthRecord(authToken string) (*entity.AuthRecord, error) {
+type AuthRepository interface {
+	GetAuthRecord(token string) (*entity.AuthRecord, error)
+	SaveAuthRecord(record *entity.AuthRecord) error
+	ConfirmToken(token string, tgId int64) error
+	InvalidateAllTokens(userId int64) error
+	PinJTI(authRecordID uint, jti string) error
+	IsJTIValid(tokenJTI string) (bool, error)
+	CreateAuthRecord(token string) error
+	InvalidateAuthRecord(jti string) error
+}
+
+type authRepository struct {
+	cfg *config.Config
+	db  *gorm.DB
+}
+
+func NewAuthRepository(db *gorm.DB, cfg *config.Config) AuthRepository {
+	return &authRepository{db: db, cfg: cfg}
+}
+
+func (ar *authRepository) GetAuthRecord(token string) (*entity.AuthRecord, error) {
 	var record *entity.AuthRecord
 
-	if err := db.DB.Where("token = ?", authToken).First(&record).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logrus.Errorf("%s: %s for token %s", repoerrs.GetTokenContext, repoerrs.TokenNotFoundContext, authToken)
-			return nil, err
-		}
-		logrus.WithError(err).Errorf("%s: %s", repoerrs.GetTokenContext, repoerrs.ErrDatabaseError)
+	if err := ar.db.Where("token = ?", token).First(&record).Error; err != nil {
+		logrus.Error(err.Error())
 		return nil, err
 	}
 	return record, nil
 }
 
-func saveAuthRecord(record *entity.AuthRecord) error {
-	if err := db.DB.Save(&record).Error; err != nil {
-		logrus.WithError(err).Errorf("%s: %s", repoerrs.SaveTokenContext, repoerrs.ErrDatabaseError)
+func (ar *authRepository) SaveAuthRecord(record *entity.AuthRecord) error {
+	if err := ar.db.Save(&record).Error; err != nil {
+		logrus.Error(err.Error())
 		return err
 	}
 	return nil
 }
 
-func ConfirmToken(token string, tgId int64) error {
-	record, err := GetAuthRecord(token)
+func (ar *authRepository) ConfirmToken(token string, tgId int64) error {
+	record, err := ar.GetAuthRecord(token)
 	if err != nil {
 		return err
 	}
 	record.Status = "confirmed"
 	record.TgID = tgId
-	return saveAuthRecord(record)
+	return ar.SaveAuthRecord(record)
 }
 
-func InvalidateAllTokens(userId int64) error {
+func (ar *authRepository) InvalidateAllTokens(userId int64) error {
 	var tokens []sql.NullString
-	if err := db.DB.Model(&entity.AuthRecord{}).Where("tg_id = ?", userId).Pluck("jwt", &tokens).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logrus.Errorf("%ss: %s for user id %v", repoerrs.GetTokenContext, repoerrs.TokenNotFoundContext, userId)
-			return err
-		}
-		logrus.WithError(err).Errorf("%ss: %s", repoerrs.GetTokenContext, repoerrs.ErrDatabaseError)
+	if err := ar.db.Model(&entity.AuthRecord{}).Where("tg_id = ?", userId).Pluck("jwt", &tokens).Error; err != nil {
+		logrus.Error(err.Error())
+		return err
 	}
 
 	var invalidatedTokens []entity.InvalidJWT
@@ -63,63 +76,46 @@ func InvalidateAllTokens(userId int64) error {
 	}
 
 	if len(invalidatedTokens) > 0 {
-		if err := db.DB.Create(&invalidatedTokens).Error; err != nil {
-			logrus.WithError(err).Errorf("%ss: %s", repoerrs.SaveTokenContext, repoerrs.ErrDatabaseError)
-			return err
-		}
-		return nil
+		return ar.db.Create(&invalidatedTokens).Error
 	}
-	if err := db.DB.Model(&entity.AuthRecord{}).Where("tg_id = ?", userId).Update("jwt", nil).Error; err != nil {
-		logrus.WithError(err).Errorf("%ss: %s", repoerrs.InvalidateTokensContext, repoerrs.ErrDatabaseError)
+	return ar.db.Model(&entity.AuthRecord{}).Where("tg_id = ?", userId).Update("jwt", nil).Error
+}
+
+func (ar *authRepository) PinJTI(authRecordID uint, JTI string) error {
+	if err := ar.db.Model(&entity.AuthRecord{}).Where("id = ?", authRecordID).Update("jwt", JTI).Error; err != nil {
+		logrus.WithError(err).Errorf("%s: %v", repo.ErrAddJTI, authRecordID)
 		return err
 	}
 	return nil
 }
 
-func PinJTI(authRecordID uint, jti string) error {
-	if err := db.DB.Model(&entity.AuthRecord{}).Where("id = ?", authRecordID).Update("jwt", jti).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logrus.WithError(err).Errorf("%ss: %s", repoerrs.UpdateJTIContext, repoerrs.TokenNotFoundContext)
-			return err
-		}
-		logrus.WithError(err).Errorf("%s: %v", repoerrs.ErrAddJTI, authRecordID)
-		return err
-	}
-	return nil
-}
-
-func IsJTIValid(tokenJTI string) (bool, error) {
+func (ar *authRepository) IsJTIValid(JTI string) (bool, error) {
 	var invalidJWT *entity.InvalidJWT
 
-	err := db.DB.Where("jwt_token = ?", tokenJTI).First(&invalidJWT).Error
+	err := ar.db.Where("jwt_token = ?", JTI).First(&invalidJWT).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return true, nil
 		}
-		logrus.WithError(err).Errorf("%ss: %s", repoerrs.GetJTIContext, repoerrs.ErrDatabaseError)
 		return false, err
 	}
 	return false, nil
 }
 
-func CreateAuthRecord(token string) error {
+func (ar *authRepository) CreateAuthRecord(token string) error {
 	authRecord := &entity.AuthRecord{
 		Token:     token,
 		Status:    "pending",
 		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(5 * time.Minute),
+		ExpiresAt: time.Now().Add(30 * time.Second),
 	}
 
-	return saveAuthRecord(authRecord)
+	return ar.SaveAuthRecord(authRecord)
 }
 
-func InvalidateAuthRecord(jti string) error {
+func (ar *authRepository) InvalidateAuthRecord(JTI string) error {
 	invalidJWT := entity.InvalidJWT{
-		JWTToken: jti,
+		JWTToken: JTI,
 	}
-	if err := db.DB.Create(&invalidJWT).Error; err != nil {
-		logrus.WithError(err).Errorf("%s: %s", repoerrs.InvalidateSessionContext, repoerrs.ErrDatabaseError)
-		return err
-	}
-	return nil
+	return ar.db.Create(&invalidJWT).Error
 }

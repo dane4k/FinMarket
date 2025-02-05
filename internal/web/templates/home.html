@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/styles.css">
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-left">
+        <a href="/" class="logo">
+            <img src="../static/images/logo.png"/>
+            <span class="title-text">FinMarket</span>
+        </a>
+    </div>
+
+    <div class="navbar-right">
+        {{ if .IsAuthenticated }}
+        <a href="/favorite" class="heart">
+            <img src="../static/images/favorite.png">
+        </a>
+        <a href="/add" class="add-product">
+            <img src="../static/images/add.png">
+        </a>
+        <a href="/profile" class="user-pic">
+            <img src="../static/images/user.png"/>
+        </a>
+        {{ else }}
+        <a href="/auth" class="auth-btn">
+            <span class="auth-text">Авторизация</span>
+            <img src="../static/images/tg.png">
+        </a>
+        {{ end }}
+    </div>
+</nav>
+
+<div class="category-container">
+    {{ range .Categories }}
+    <div class="category-item">
+        <a href="/products/{{ .ID }}">
+            <img class="category-img" src="{{ .URI }}" alt="category logo">
+            <span class="category-text">{{ .Name }}</span>
+        </a>
+    </div>
+    {{ end }}
+</div>
+
+<div class="products">
+    {{ range .Products }}
+    <div class="product">
+        <a href="/product/{{ .ID }}">
+            <img src="{{ .PhotoURI }}" alt="{{ .Name }}">
+            <h2>{{ .Name }}</h2>
+            <p>₽{{ .Price }}</p>
+        </a>
+    </div>
+    {{ end }}
+</div>
+</body>
+</html>

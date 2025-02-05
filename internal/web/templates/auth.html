@@ -4,14 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Проверка авторизации</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
 </head>
-<body>
-<h1>Вы были перенаправлены на ссылку для авторизации. Если этого не произошло, нажмите</h1>
-<h1><a href="{{ .AuthURL }}" target="_blank">АВТОРИЗАЦИЯ ЧЕРЕЗ TELEGRAM</a></h1>
+<body class="auth">
+<div class="auth-page">
+    <h1>Вы были перенаправлены на ссылку для авторизации. Если этого не произошло, нажмите</h1>
+    <h1><a href="{{ .AuthURL }}" target="_blank">АВТОРИЗАЦИЯ ЧЕРЕЗ TELEGRAM</a></h1>
+    <script>
+        const authToken = "{{ .authToken }}";
+    </script>
+    <script src="../static/js/check_status.js"></script>
+</div>
 
-<script>
-    const authToken = "{{ .authToken }}";
-</script>
-<script src="../static/js/check_status.js"></script>
 </body>
 </html>

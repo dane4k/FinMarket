@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+database:
+  host: "db"
+  port: 5432
+  user: "postgres"
+  password: ""
+  name: ""
+
+auth:
+  jwt_secret: "" # jwt secret key
+
+telegram:
+  bot_token: "" # tg bot token here
+
+imgur:
+  default_avatar: "https://imgur.com/izgRVPJ"  # default avatar pic link
+  client_id: "" # imgur client id
+  client_secret: "" # imgur client secret (app secret)
+  access_token: "" # imgur access token (oauth2/)

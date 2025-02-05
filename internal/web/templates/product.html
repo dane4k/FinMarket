@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Product.Name }}</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-left">
+        <a href="/" class="logo">
+            <img src="../static/images/logo.png"/>
+            <span class="title-text">FinMarket</span>
+        </a>
+    </div>
+
+    <div class="navbar-right">
+        {{ if .IsAuthenticated }}
+        <a href="/favorite" class="heart">
+            <img src="../static/images/favorite.png">
+        </a>
+        <a href="/add" class="add-product">
+            <img src="../static/images/add.png">
+        </a>
+        <a href="/profile" class="user-pic">
+            <img src="../static/images/user.png"/>
+        </a>
+        {{ else }}
+        <a href="/auth" class="auth-btn">
+            <span class="auth-text">Авторизация</span>
+            <img src="../static/images/tg.png">
+        </a>
+        {{ end }}
+    </div>
+</nav>
+
+<div class="category-container">
+    {{ range .Categories }}
+    <div class="category-item">
+        <a href="/products/{{ .ID }}">
+            <img class="category-img" src="{{ .URI }}" alt="category logo">
+            <span class="category-text">{{ .Name }}</span>
+        </a>
+    </div>
+    {{ end }}
+</div>
+
+<div class="product-details">
+    <h1>{{ .Product.Name }}</h1>
+    <div class="carousel-container">
+        <div class="carousel">
+            {{ range .Product.PhotosURLs }}
+            <img src="{{ . }}" alt="Product Photo">
+            {{ end }}
+        </div>
+        <button class="next" onclick="nextImage()">❯</button>
+        <button class="prev" onclick="prevImage()">❮</button>
+    </div>
+
+    <div class="product-info">
+        <h3>Описание:</h3>
+        <p>{{ .Product.Description }}</p>
+
+        <h3>Продавец:</h3>
+        <p>{{ .Product.SellerID }}</p>
+
+        <h3>Категория:</h3>
+        <p>{{ .Product.CategoryID }}</p>
+
+        <h3>Цена:</h3>
+        <p class="price">₽{{ .Product.Price }}</p>
+
+        <h3>Статус:</h3>
+        <p>{{ if .Product.Active }}Активный{{ else }}Неактивный{{ end }}</p>
+    </div>
+</div>
+
+<script>
+    let currentIndex = 0;
+    const images = document.querySelectorAll('.carousel img');
+    const totalImages = images.length;
+
+    function showImage(index) {
+        if (index >= totalImages) {
+            currentIndex = 0;
+        } else if (index < 0) {
+            currentIndex = totalImages - 1;
+        } else {
+            currentIndex = index;
+        }
+        const offset = -currentIndex * 100;
+        document.querySelector('.carousel').style.transform = `translateX(${offset}%)`;
+    }
+
+    function nextImage() {
+        showImage(currentIndex + 1);
+    }
+
+    function prevImage() {
+        showImage(currentIndex - 1);
+    }
+</script>
+
+</body>
+</html>

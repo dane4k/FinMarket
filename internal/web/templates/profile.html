@@ -3,10 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Профиль пользователя</title>
+    <title>Профиль</title>
     <link rel="stylesheet" href="../static/css/styles.css">
 </head>
 <body>
+
+<nav class="navbar">
+    <div class="navbar-left">
+        <a href="/" class="logo">
+            <img src="../static/images/logo.png"/>
+            <span class="title-text">FinMarket</span>
+        </a>
+    </div>
+    <div class="navbar-right">
+        <a href="/favorite" class="heart">
+            <img src="../static/images/favorite.png">
+        </a>
+        <a href="/add" class="add-product">
+            <img src="../static/images/add.png">
+        </a>
+        <a href="/profile" class="user-pic">
+            <img src="../static/images/user.png"/>
+        </a>
+    </div>
+</nav>
+
+
 <div class="profile-container">
     <img src="{{ .avatarPic }}" class="avatar">
     <h1>{{ .name }}</h1>
@@ -23,11 +45,13 @@
         <strong>Рейтинг:</strong> <span>{{ .rating }}</span>
     </div>
     <button class="avatar-button" id="updateAvatarBtn">Обновить аватарку</button>
+    <a href="/logout" class="logout-button">Выйти</a>
+
 </div>
-<a href="/logout" class="logout-button">Выйти</a>
 </div>
 <script>
     const userID = "{{ .userID }}";
 </script>
-<script src="../static/js/profile.js"></script></body>
+<script src="../static/js/profile.js"></script>
+</body>
 </html>

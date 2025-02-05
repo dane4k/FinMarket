@@ -1,7 +1,8 @@
 const userAuthToken = authToken;
+
 if (!userAuthToken) {
-    console.error("Ошибка: токен авторизации пустой.");
     alert("Ошибка: токен не передан или некорректен.");
+    window.location.href = "/auth";
 } else {
     let tokenExpired = false;
 
@@ -9,31 +10,27 @@ if (!userAuthToken) {
         if (tokenExpired) return;
 
         fetch(`/check-status/${userAuthToken}`)
-            .then(response => {
-                if (response.status === 404) {
-                    console.error("Token not found.");
-                    tokenExpired = true;
-                    alert("Токен не найден. Пожалуйста, попробуйте заново.");
-                    return;
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                if (data) {
-                    console.log('Received data:', data);
-                    if (data.status === "confirmed") {
-                        setTimeout(() => {
-                            window.location.href = "/profile";
-                        }, 1000);
-                    } else if (data.error === "token expired") {
-                        alert("Токен истёк. Пожалуйста, авторизуйтесь заново.");
-                        window.location.href = "/";
+                if (data.error) {
+                    console.error("Ошибка:", data.error);
+                    if (data.error === "auth token not found") {
+                        alert("Токен не найден. Авторизуйтесь заново");
+                        window.location.href = "/auth";
+                    } else if (data.error === "auth token expired") {
+                        alert("Токен авторизации истек. Авторизуйтесь заново");
+                        window.location.href = "/auth";
                     }
+                    tokenExpired = true;
+                } else if (data.status === "confirmed") {
+                    window.location.href = "/profile";
                 }
             })
-            .catch(err => console.error("Ошибка проверки статуса:", err));
+            .catch(err => {
+                console.error("Ошибка при проверке токена:", err);
+                alert("Ошибка сервера. Пожалуйста, попробуйте позже.");
+            });
     }
 
     setInterval(checkStatus, 5000);
 }
-

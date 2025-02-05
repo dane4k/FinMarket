@@ -1,0 +1,56 @@
+services:
+
+  migrate:
+    image: migrate/migrate
+    container_name: finmarket_migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations
+    command:
+      - "-path"
+      - "/migrations"
+      - "-database"
+      - "postgres://postgres:admin@db:5432/finmarket?sslmode=disable"
+      - "up"
+    environment:
+      WAIT_HOSTS: db:5432
+      WAIT_TIMEOUT: 30
+    restart: "no"
+
+  app:
+    build: .
+    container_name: finmarket_app
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      TZ: "Europe/Moscow"
+      CONFIG_PATH: "config.yaml"
+    command: ["./main"]
+
+  db:
+    image: postgres:15-alpine
+    container_name: finmarket_db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: "" # config
+      POSTGRES_PASSWORD: "" # config
+      POSTGRES_DB: "" # config
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
